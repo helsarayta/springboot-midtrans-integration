@@ -17,13 +17,13 @@ public class PaymentController {
     private final WebHook webHook;
 
     @GetMapping(value = "get-status", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> getStatusByOrderId(@RequestParam("orderId") String orderId) throws JsonProcessingException {
-        return ResponseEntity.ok(paymentService.getStatusOrderId(orderId));
+    public ResponseEntity<String> getStatusByOrderId(@RequestParam("orderId") String orderId, @RequestParam("auth") String auth) throws JsonProcessingException {
+        return ResponseEntity.ok(paymentService.getStatusOrderId(orderId, auth));
     }
 
     @PostMapping(value = "create", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> createTransactionsBankTransfer(@RequestParam("amount") Integer amount,@RequestParam("bank") String bankName) throws JsonProcessingException {
-        return ResponseEntity.ok(paymentService.createTransactionsBankTransfer(amount, bankName));
+    public ResponseEntity<String> createTransactionsBankTransfer(@RequestParam("amount") Integer amount,@RequestParam("bank") String bankName, @RequestParam("auth") String auth) throws JsonProcessingException {
+        return ResponseEntity.ok(paymentService.createTransactionsBankTransfer(amount, bankName, auth));
     }
     @PostMapping("webhook") //use ngrok and register to midtrans
     public ResponseEntity<String> retrieveData(@RequestBody String data) {
