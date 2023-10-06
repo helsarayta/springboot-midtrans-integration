@@ -63,6 +63,28 @@ public class PaymentService {
         return new ObjectMapper().writeValueAsString(body);
     }
 
+    public String createTransactionsEWallet(Integer amount, String authHeader) throws JsonProcessingException {
+        Map<String, Object> charge = new HashMap<>();
+
+        Map<String, Object> transactionDetail = new HashMap<>();
+        transactionDetail.put("order_id", generateOrderId());
+        transactionDetail.put("gross_amount", amount);
+
+        Map<String, Object> customExpired = new HashMap<>();
+        customExpired.put("expiry_duration", 5);
+        customExpired.put("unit", "minute");
+
+        charge.put("payment_type","gopay");
+        charge.put("transaction_details", transactionDetail);
+        charge.put("custom_expiry", customExpired);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", Base64.getEncoder().encodeToString(authHeader.getBytes(StandardCharsets.UTF_8)));
+        Map<String, Object> body = restTemplate.exchange(urlCreateTransactions, HttpMethod.POST, new HttpEntity<>(charge,headers), Map.class).getBody();
+
+        return new ObjectMapper().writeValueAsString(body);
+    }
+
     private String generateOrderId() {
         String order = "order-";
         int randomNumber = new Random().nextInt(999999);

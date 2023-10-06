@@ -21,9 +21,13 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getStatusOrderId(orderId, auth));
     }
 
-    @PostMapping(value = "create", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "create/transfer", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> createTransactionsBankTransfer(@RequestParam("amount") Integer amount,@RequestParam("bank") String bankName, @RequestParam("auth") String auth) throws JsonProcessingException {
         return ResponseEntity.ok(paymentService.createTransactionsBankTransfer(amount, bankName, auth));
+    }
+    @PostMapping(value = "create/ewallet", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> createTransactionsEWallet(@RequestParam("amount") Integer amount, @RequestParam("auth") String auth) throws JsonProcessingException {
+        return ResponseEntity.ok(paymentService.createTransactionsEWallet(amount, auth));
     }
     @PostMapping("webhook") //use ngrok and register to midtrans
     public ResponseEntity<String> retrieveData(@RequestBody String data) {
