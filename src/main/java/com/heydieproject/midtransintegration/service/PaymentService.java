@@ -29,6 +29,8 @@ public class PaymentService {
     public String urlBaseSandbox;
     @Value("${url-create-transactions}")
     public String urlCreateTransactions;
+    @Value("${url-create-token}")
+    public String urlCreateToken;
 
     public String getStatusOrderId(String orderId, String authHeader) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
@@ -83,6 +85,38 @@ public class PaymentService {
         Map<String, Object> body = restTemplate.exchange(urlCreateTransactions, HttpMethod.POST, new HttpEntity<>(charge,headers), Map.class).getBody();
 
         return new ObjectMapper().writeValueAsString(body);
+    }
+
+    public String createCreditCardTransaction(Integer amount, String authHeader, String cardNumber, String cvv, String expMonth, String expYear, String authClient) throws JsonProcessingException {
+        Map<String, Object> charge = new HashMap<>();
+
+        Map<String, Object> transactionDetail = new HashMap<>();
+        transactionDetail.put("order_id", generateOrderId());
+        transactionDetail.put("gross_amount", amount);
+
+        Map<String, Object> customExpired = new HashMap<>();
+        customExpired.put("expiry_duration", 5);
+        customExpired.put("unit", "minute");
+
+        Map<String, Object> creditCard = new HashMap<>();
+        creditCard.put("token_id", generateTokenId(cardNumber,cvv,expMonth,expYear,authClient));
+        creditCard.put("authentication", true);
+
+        charge.put("payment_type","credit_card");
+        charge.put("transaction_details", transactionDetail);
+        charge.put("custom_expiry", customExpired);
+        charge.put("credit_card", creditCard);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", Base64.getEncoder().encodeToString(authHeader.getBytes(StandardCharsets.UTF_8)));
+        Map<String, Object> body = restTemplate.exchange(urlCreateTransactions, HttpMethod.POST, new HttpEntity<>(charge,headers), Map.class).getBody();
+
+        return new ObjectMapper().writeValueAsString(body);
+    }
+
+    private String generateTokenId(String cardNumber, String cvv, String expMonth, String expYear, String authClient) {
+        Map<String, Object> body = restTemplate.getForEntity(urlCreateToken + "card_number=" + cardNumber + "&card_cvv=" + cvv + "&card_exp_month=" + expMonth + "&card_exp_year=" + expYear + "&client_key=" + authClient, Map.class).getBody();
+        return body.get("token_id").toString();
     }
 
     private String generateOrderId() {

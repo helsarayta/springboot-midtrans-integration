@@ -17,21 +17,35 @@ public class PaymentController {
     private final WebHook webHook;
 
     @GetMapping(value = "get-status", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> getStatusByOrderId(@RequestParam("orderId") String orderId, @RequestParam("auth") String auth) throws JsonProcessingException {
+    public ResponseEntity<String> getStatusByOrderId(@RequestParam("orderId") String orderId, @RequestParam("serverKey") String auth) throws JsonProcessingException {
         return ResponseEntity.ok(paymentService.getStatusOrderId(orderId, auth));
     }
 
     @PostMapping(value = "create/transfer", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> createTransactionsBankTransfer(@RequestParam("amount") Integer amount,@RequestParam("bank") String bankName, @RequestParam("auth") String auth) throws JsonProcessingException {
+    public ResponseEntity<String> createTransactionsBankTransfer(@RequestParam("amount") Integer amount,@RequestParam("bank") String bankName, @RequestParam("serverKey") String auth) throws JsonProcessingException {
         return ResponseEntity.ok(paymentService.createTransactionsBankTransfer(amount, bankName, auth));
     }
     @PostMapping(value = "create/ewallet", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> createTransactionsEWallet(@RequestParam("amount") Integer amount, @RequestParam("auth") String auth) throws JsonProcessingException {
+    public ResponseEntity<String> createTransactionsEWallet(@RequestParam("amount") Integer amount, @RequestParam("serverKey") String auth) throws JsonProcessingException {
         return ResponseEntity.ok(paymentService.createTransactionsEWallet(amount, auth));
+    }
+
+    @PostMapping(value = "create/cc", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> createCreditCardTransaction(@RequestParam("amount") Integer amount,
+                                                              @RequestParam("serverKey") String authHeader,
+                                                              @RequestParam("cardNumber") String cardNumber,
+                                                              @RequestParam("cvv") String cvv,
+                                                              @RequestParam("expMonth") String expMonth,
+                                                              @RequestParam("expYear") String expYear,
+                                                              @RequestParam("clientKey") String authClient) throws JsonProcessingException {
+        return ResponseEntity.ok(paymentService.createCreditCardTransaction(amount, authHeader, cardNumber, cvv, expMonth, expYear, authClient));
     }
     @PostMapping("webhook") //use ngrok and register to midtrans
     public ResponseEntity<String> retrieveData(@RequestBody String data) {
         return new ResponseEntity<>(webHook.retrieveResponse(data), HttpStatus.OK);
     }
+
+
+
 
 }
