@@ -1,6 +1,8 @@
 package com.heydieproject.midtransintegration.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.heydieproject.midtransintegration.model.Customer;
+import com.heydieproject.midtransintegration.model.Product;
 import com.heydieproject.midtransintegration.service.PaymentService;
 import com.heydieproject.midtransintegration.service.WebHook;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +41,13 @@ public class PaymentController {
                                                               @RequestParam("expYear") String expYear,
                                                               @RequestParam("clientKey") String authClient) throws JsonProcessingException {
         return ResponseEntity.ok(paymentService.createCreditCardTransaction(amount, authHeader, cardNumber, cvv, expMonth, expYear, authClient));
+    }
+
+    @PostMapping(value = "create/otc", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> createTransactionOverTheCounter(@RequestParam("keyServer") String authHeader,
+                                                                  @RequestBody Object param
+                                                                  ) throws JsonProcessingException {
+        return ResponseEntity.ok(paymentService.createTransactionOverTheCounter(authHeader, param));
     }
     @PostMapping("webhook") //use ngrok and register to midtrans
     public ResponseEntity<String> retrieveData(@RequestBody String data) {

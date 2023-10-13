@@ -8,17 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
+import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -112,6 +106,69 @@ public class PaymentService {
         Map<String, Object> body = restTemplate.exchange(urlCreateTransactions, HttpMethod.POST, new HttpEntity<>(charge,headers), Map.class).getBody();
 
         return new ObjectMapper().writeValueAsString(body);
+    }
+
+    public String createTransactionOverTheCounter(String authHeader, Object param) throws JsonProcessingException {
+        try {
+            ObjectMapper om = new ObjectMapper();
+            Map<String, Object> req = om.convertValue(param, Map.class);
+
+            Map<String, Object> charge = new HashMap<>();
+
+            Map<String, Object> transactionDetail = new HashMap<>();
+            transactionDetail.put("order_id", generateOrderId());
+            transactionDetail.put("gross_amount", req.get("amount"));
+
+            Map<String, Object> cStoreDetail = new HashMap<>();
+            if (req.get("store").toString().equals("Indomaret") || req.get("store").toString().equals("alfamart")) {
+                cStoreDetail.put("store", req.get("store"));
+            } else {
+                return "Please fill store Indomaret or alfamart";
+            }
+
+            cStoreDetail.put("store", req.get("store"));
+            if (req.get("store").equals("Indomaret")) {
+                cStoreDetail.put("message", req.get("message"));
+            } else if (req.get("store").equals("alfamart")) {
+                cStoreDetail.put("alfamart_free_text_1", req.get("message"));
+            }
+
+            Map<String, Object> customerDetail = new HashMap<>();
+            customerDetail.put("first_name", req.get("firstName"));
+            customerDetail.put("last_name", req.get("lastName"));
+            customerDetail.put("email", req.get("email"));
+            customerDetail.put("phone", req.get("phone"));
+
+            List<Map<String, Object>> products = (List<Map<String, Object>>) req.get("products");
+            List<Map<String, Object>> productList = new ArrayList<>();
+
+            for (int i = 0; i < products.size(); i++) {
+                Map<String, Object> productDetail = new HashMap<>();
+                productDetail.put("id", products.get(i).get("id"));
+                productDetail.put("price", products.get(i).get("price"));
+                productDetail.put("quantity", products.get(i).get("quantity"));
+                productDetail.put("name", products.get(i).get("name"));
+
+                productList.add(productDetail);
+            }
+
+            charge.put("payment_type", "cstore");
+            charge.put("transaction_details", transactionDetail);
+            charge.put("cstore", cStoreDetail);
+            charge.put("customer_details", customerDetail);
+            charge.put("item_details", productList);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Authorization", Base64.getEncoder().encodeToString(authHeader.getBytes(StandardCharsets.UTF_8)));
+            Map<String, Object> body = restTemplate.exchange(urlCreateTransactions, HttpMethod.POST, new HttpEntity<>(charge, headers), Map.class).getBody();
+
+            return new ObjectMapper().writeValueAsString(body);
+        }catch (Exception e) {
+            int i = e.getMessage().indexOf("{");
+            Map<String,Object> req = new ObjectMapper().readValue(e.getMessage().substring(i), Map.class);
+            List<String> listErr = (List<String>) req.get("validation_messages");
+            return listErr.get(0);
+        }
     }
 
     private String generateTokenId(String cardNumber, String cvv, String expMonth, String expYear, String authClient) {
